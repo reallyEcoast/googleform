@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Google Forms - Response Simulation</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <style>
+        body { background-color: #f0ebf8; font-family: 'Google Sans', Roboto, Arial, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 40px; margin: 0; }
+        .container { width: 100%; max-width: 800px; }
+        
+        /* Main Card */
+        .card { background: white; border-radius: 8px; border: 1px solid #dadce0; padding: 32px 32px 48px 32px; margin-bottom: 20px; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        
+        /* Copy chart removed as requested */
+
+        .title { font-size: 20px; color: #202124; margin: 0 0 5px 0; outline: none; font-weight: 400; }
+        .response-count { font-size: 14px; color: #70757a; margin-bottom: 30px; outline: none; }
+        
+        /* Layout */
+        .chart-flex { display: flex; align-items: center; justify-content: flex-start; gap: 60px; }
+        .canvas-box { width: 320px; height: 320px; }
+        
+        .legend-list { list-style: none; padding: 0; margin: 0; }
+        .legend-item { display: flex; align-items: center; margin-bottom: 12px; font-size: 14px; color: #3c4043; }
+        .dot { height: 12px; width: 12px; border-radius: 50%; margin-right: 12px; flex-shrink: 0; }
+        
+        /* Editing Interface */
+        .edit-ui { display: none; margin-left: 15px; }
+        .data-input { border: none; border-bottom: 1px solid #1a73e8; width: 50px; text-align: center; font-family: inherit; font-size: 14px; outline: none; background: #f8f9fa; font-weight: bold; }
+
+        /* Floating Admin Controls */
+        .admin-panel { position: fixed; bottom: 20px; right: 20px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 999; border: 1px solid #ddd; }
+        .btn { border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; margin: 5px; }
+        .btn-edit { background: #673ab7; color: white; }
+        .btn-add { background: #e8f0fe; color: #1a73e8; border: 1px solid #1a73e8; }
+        
+        /* Toggle Visibility */
+        .show-editing .edit-ui { display: inline-flex; }
+    </style>
+</head>
+<body id="body-tag">
+
+<div class="admin-panel">
+    <div style="font-weight: bold; margin-bottom: 10px; color: #673ab7; font-size: 14px;">Simulation Tools</div>
+    <button class="btn btn-edit" onclick="toggleEdit()">Edit Data/Labels</button>
+    <button class="btn btn-add" onclick="addNewCard()">Add Question</button>
+</div>
+
+<div class="container" id="wrapper">
+    <div class="card" id="card-1">
+        <div class="title" contenteditable="true">What's the content creation category?</div>
+        <div class="response-count" contenteditable="true">1,395 responses</div>
+
+        <div class="chart-flex">
+            <div class="canvas-box">
+                <canvas id="chart-1"></canvas>
+            </div>
+
+            <div class="legend-list">
+                <div class="legend-item">
+                    <span class="dot" style="background-color: #4285f4;"></span>
+                    <span contenteditable="true">Video</span>
+                    <span class="edit-ui"> &nbsp; : <input type="number" class="data-input" value="33.5" oninput="updateChart(1)"> %</span>
+                </div>
+                <div class="legend-item">
+                    <span class="dot" style="background-color: #ea4335;"></span>
+                    <span contenteditable="true">Post/Article/Blog</span>
+                    <span class="edit-ui"> &nbsp; : <input type="number" class="data-input" value="30.4" oninput="updateChart(1)"> %</span>
+                </div>
+                <div class="legend-item">
+                    <span class="dot" style="background-color: #fbbc04;"></span>
+                    <span contenteditable="true">Infographic</span>
+                    <span class="edit-ui"> &nbsp; : <input type="number" class="data-input" value="36.1" oninput="updateChart(1)"> %</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    Chart.register(ChartDataLabels);
+    let charts = {};
+
+    function initChart(id) {
+        const ctx = document.getElementById(`chart-${id}`).getContext('2d');
+        const inputs = document.querySelectorAll(`#card-${id} .data-input`);
+        const values = Array.from(inputs).map(i => parseFloat(i.value) || 0);
+
+        charts[id] = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                datasets: [{
+                    data: values,
+                    backgroundColor: ['#4285f4', '#ea4335', '#fbbc04', '#34a853', '#ff6e01'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        color: '#fff',
+                        font: { weight: 'bold', size: 15 },
+                        formatter: (val) => val + '%'
+                    }
+                }
+            }
+        });
+    }
+
+    function updateChart(id) {
+        const inputs = document.querySelectorAll(`#card-${id} .data-input`);
+        charts[id].data.datasets[0].data = Array.from(inputs).map(i => parseFloat(i.value) || 0);
+        charts[id].update();
+    }
+
+    function toggleEdit() {
+        document.getElementById('body-tag').classList.toggle('show-editing');
+    }
+
+    function addNewCard() {
+        const id = Date.now();
+        const wrapper = document.getElementById('wrapper');
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.id = `card-${id}`;
+        div.innerHTML = `
+            <div class="title" contenteditable="true">New Question</div>
+            <div class="response-count" contenteditable="true">0 responses</div>
+            <div class="chart-flex">
+                <div class="canvas-box"><canvas id="chart-${id}"></canvas></div>
+                <div class="legend-list">
+                    <div class="legend-item"><span class="dot" style="background-color: #4285f4;"></span><span contenteditable="true">Option A</span><span class="edit-ui"> &nbsp; : <input type="number" class="data-input" value="50" oninput="updateChart(${id})"> %</span></div>
+                    <div class="legend-item"><span class="dot" style="background-color: #ea4335;"></span><span contenteditable="true">Option B</span><span class="edit-ui"> &nbsp; : <input type="number" class="data-input" value="50" oninput="updateChart(${id})"> %</span></div>
+                </div>
+            </div>`;
+        wrapper.appendChild(div);
+        initChart(id);
+    }
+
+    window.onload = () => initChart(1);
+</script>
+
+</body>
+</html>
